@@ -1,18 +1,35 @@
 <template>
   <div class="home">
-    <img alt="Vue logo" src="../assets/logo.png" />
-    <HelloWorld msg="Welcome to Your Vue.js App" />
+    <img class="mx-auto block" alt="Vue logo" src="../assets/logo.png" />
+    <HelloWorld msg="Bismillah !" />
+    <h1 class="text-green-500">Welcome to Vue Media Picker</h1>
+
+    <hr>
+
+    <file-selector
+      :enableType="true"
+      label="Please Select an File"
+      @getUploadedFile="getFile"
+    />
+
   </div>
+
 </template>
 
 <script>
-// @ is an alias to /src
 import HelloWorld from "@/components/HelloWorld.vue";
+import FileSelector from "@/components/FileSelector.vue";
 
 export default {
   name: "HomeView",
   components: {
     HelloWorld,
+    FileSelector
   },
+  methods: {
+    getFile(_data) {
+      console.log(_data)
+    }
+  }
 };
 </script>
