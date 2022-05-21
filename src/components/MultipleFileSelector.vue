@@ -1,15 +1,10 @@
 <template>
   <div class="drop display-inline align-center mt-6" @dragover.prevent @drop="onDrop">
-    <label v-if="!file" class="btn display-inline mt-2">
+    <label class="btn display-inline mt-2">
       {{ label }}
-      <input type="file" name="image" @change="onChange">
+      <input type="file" @change="onChange" multiple>
     </label>
-    <label v-else class="hidden display-inline align-center" :class="{ 'image': true }">
-      <div>
-        <br>
-        <button class="btn mt-2" @click="removeFile">REMOVE</button>
-      </div>
-    </label>
+
   </div>
 
   <div v-if="enableType" class="mt-4">
@@ -19,17 +14,26 @@
            v-if="enableType">
   </div>
 
-  <p class="mt-4">
-    Name: {{ this.file_data.name }}<br>
-    Extensions: {{ this.file_data.type }}<br>
-    Uploaded File: {{ no_of_files ? no_of_files : 0 }}
-  </p>
+  {{ files }}
 
-  <img v-if="fileType === 'image/*'" :src="file" alt="" class="img" />
+  Uploaded Files: {{ no_of_files ? no_of_files : 0 }}
+  <div v-for="(file,index) in files">
+    <p  class="mt-4">
+      Name: {{ files_data[index].name }}<br>
+      Extensions: {{ files_data[index].type }}<br>
+    </p>
 
-  <video v-if="fileType === 'video/*' && file_data.type === 'video/mp4'" width="320" height="240" class="mx-auto block" controls>
-    <source :src="file" type="video/mp4">
-  </video>
+    <button class="btn mt-2" @click="removeFile(index)">REMOVE</button><br>
+
+    <img v-if="fileType === 'image/*'" :src="file" alt="" class="img" />
+
+    <video v-if="fileType === 'video/*' && this.files_data[index].type === 'video/mp4'" width="320" height="240" class="mx-auto block" controls>
+      <source :src="file" type="video/mp4">
+    </video>
+
+
+  </div>
+
 
 </template>
 
@@ -38,17 +42,16 @@ export default {
   name: "FileSelector",
   data() {
     return {
-      file_data: "",
-      file: "",
-      fileType: "application/pdf",
       no_of_files: "",
-      file_extension: ""
+      files_data: [],
+      files: [],
+      fileType: "image/*"
     };
   },
   props: {
     label: {
       type: String,
-      default: "SELECT OR DROP AN IMAGE"
+      default: "SELECT OR DROP AN IMAGES/FILES"
     },
     enableType: {
       type: Boolean,
@@ -56,13 +59,10 @@ export default {
     }
   },
   watch: {
-    file: {
+    files: {
       handler(newVal) {
-        const obj = {
-          file: newVal,
-          file_data: this.file_data
-        };
-        this.$emit("getUploadedFile", obj);
+        this.no_of_files = this.files.length
+        this.$emit("getUploadedFiles", this.files);
       }, deep: true
     }
   },
@@ -70,36 +70,45 @@ export default {
     onDrop: function(e) {
       e.stopPropagation();
       e.preventDefault();
-      let files = e.dataTransfer.files;
-      this.createFile(files[0]);
+      let _files = e.dataTransfer.files;
+      for (let f = 0; f < _files.length; f++) {
+        this.files_data[f] = _files[f];
+      }
+      this.createFile(_files);
     },
 
     onChange(e) {
-      let files = e.target.files;
-      console.log(files);
-      this.file_data = files[0];
-      this.no_of_files = files.length;
-      this.createFile(files[0]);
-
-    },
-
-    createFile(file) {
-      if (!file.type.match(this.fileType)) {
-        alert("Please Select File of appropriate type, default:images");
-        return;
+      let _files = e.target.files;
+      for (let f = 0; f < _files.length; f++) {
+        this.files_data[f] = _files[f];
       }
 
-      let reader = new FileReader();
-      let vm = this;
-
-      reader.onload = function(e) {
-        vm.file = e.target.result;
-      };
-      reader.readAsDataURL(file);
+      this.createFile(_files);
     },
 
-    removeFile() {
-      this.file = "";
+    createFile(files) {
+      for (let f = 0; f < files.length; f++) {
+        if (!files[f].type.match(this.fileType)) {
+          alert("Please Select Files of Same types.");
+          return;
+        }
+      }
+
+      for (let i = 0; i < files.length; i++) {
+        let reader = new FileReader();
+        let vm = this;
+
+        reader.onload = function(e) {
+          vm.files[i] = e.target.result;
+        };
+
+        reader.readAsDataURL(files[i]);
+      }
+
+    },
+
+    removeFile(_index) {
+      this.files.splice(_index,1);
     }
   }
 };

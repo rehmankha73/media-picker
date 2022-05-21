@@ -40,7 +40,7 @@ export default {
     return {
       file_data: "",
       file: "",
-      fileType: "application/pdf",
+      fileType: "image/*",
       no_of_files: "",
       file_extension: ""
     };
@@ -62,6 +62,7 @@ export default {
           file: newVal,
           file_data: this.file_data
         };
+        this.no_of_files = 1;
         this.$emit("getUploadedFile", obj);
       }, deep: true
     }
@@ -71,6 +72,7 @@ export default {
       e.stopPropagation();
       e.preventDefault();
       let files = e.dataTransfer.files;
+      this.file_data = files[0];
       this.createFile(files[0]);
     },
 
@@ -78,7 +80,6 @@ export default {
       let files = e.target.files;
       console.log(files);
       this.file_data = files[0];
-      this.no_of_files = files.length;
       this.createFile(files[0]);
 
     },
