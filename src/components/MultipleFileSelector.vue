@@ -1,11 +1,35 @@
 <template>
-  <div class="drop display-inline align-center mt-6" @dragover.prevent @drop="onDrop">
-    <label class="btn display-inline mt-2">
+  <div class="drop-box display-inline align-center mt-6" @dragover.prevent @drop=" onDrop "
+       @click="files.length === 0 ? $refs['file-input'].click() : ''"
+  >
+    <label v-if="files.length === 0" class="input-message mt-2">
       {{ label }}
-      <input type="file" @change="onChange" multiple>
+      <input class="file-input" ref="file-input" type="file" name="image" @change="onChange" multiple>
     </label>
+    <label v-else class="hidden display-inline align-center mx-4" :class="{ 'image': true }">
+      <div v-for="(file, index) in files" class="d-flex justify-content-between my-2">
 
+        <img v-if="file && fileType === 'image/*'" :src="file" :alt="file.name" width="50px" height="50px"
+             class="image-preview" />
+
+        <img v-if="file && fileType === 'application/*'" src="../assets/file_icon.jpg" :alt="file.name"
+             style="width: 50px; height: 50px" />
+
+        <img v-if="file && fileType === 'video/*'" src="../assets/video_icon.png" :alt="file.name"
+             style="width: 50px; height: 50px" />
+
+        <p class="mt-4">
+          Name: {{ files_data[index].name }}<br>
+          Extensions: {{ files_data[index].type }}<br>
+        </p>
+
+        <span v-if="file"
+              class="mt-2 text-danger border-0 cursor-pointer" @click.stop="removeFile(index)">X</span>
+      </div>
+    </label>
   </div>
+  <br>
+  <span v-if="error" class="text-danger">{{ error }}</span>
 
   <div v-if="enableType" class="mt-4">
     <label for="fileType" v-if="enableType">Type of files:</label>
@@ -18,19 +42,20 @@
 
   Uploaded Files: {{ no_of_files ? no_of_files : 0 }}
   <div v-for="(file,index) in files">
-    <p  class="mt-4">
+    <p class="mt-4">
       Name: {{ files_data[index].name }}<br>
       Extensions: {{ files_data[index].type }}<br>
     </p>
 
-    <button class="btn mt-2" @click="removeFile(index)">REMOVE</button><br>
+    <button class="btn mt-2" @click="removeFile(index)">REMOVE</button>
+    <br>
 
     <img v-if="fileType === 'image/*'" :src="file" alt="" class="img" />
 
-    <video v-if="fileType === 'video/*' && this.files_data[index].type === 'video/mp4'" width="320" height="240" class="mx-auto block" controls>
+    <video v-if="fileType === 'video/*' && this.files_data[index].type === 'video/mp4'" width="320" height="240"
+           class="mx-auto block" controls>
       <source :src="file" type="video/mp4">
     </video>
-
 
   </div>
 
@@ -42,10 +67,11 @@ export default {
   name: "FileSelector",
   data() {
     return {
+      error: "",
       no_of_files: "",
       files_data: [],
       files: [],
-      fileType: "image/*"
+      fileType: "video/*"
     };
   },
   props: {
@@ -56,12 +82,16 @@ export default {
     enableType: {
       type: Boolean,
       default: false
+    },
+    formErrors: {
+      type: String,
+      default: "PLease Upload related typed documents which are allowed!"
     }
   },
   watch: {
     files: {
       handler(newVal) {
-        this.no_of_files = this.files.length
+        this.no_of_files = this.files.length;
         this.$emit("getUploadedFiles", this.files);
       }, deep: true
     }
@@ -71,44 +101,56 @@ export default {
       e.stopPropagation();
       e.preventDefault();
       let _files = e.dataTransfer.files;
+      let _valid_files = [];
+
       for (let f = 0; f < _files.length; f++) {
+        if (!_files[f].type.match(this.fileType)) {
+          this.error = this.formErrors;
+          alert(this.formErrors);
+          break;
+        }
         this.files_data[f] = _files[f];
+        _valid_files.push(_files[f]);
       }
-      this.createFile(_files);
+
+      this.createFile(_valid_files);
+
     },
 
     onChange(e) {
       let _files = e.target.files;
+      let _valid_files = [];
       for (let f = 0; f < _files.length; f++) {
+        if (!_files[f].type.match(this.fileType)) {
+          this.error = this.formErrors;
+          alert(this.formErrors);
+          break;
+        }
         this.files_data[f] = _files[f];
+        _valid_files.push(_files[f]);
       }
 
-      this.createFile(_files);
+      this.createFile(_valid_files);
     },
 
     createFile(files) {
-      for (let f = 0; f < files.length; f++) {
-        if (!files[f].type.match(this.fileType)) {
-          alert("Please Select Files of Same types.");
-          return;
-        }
-      }
 
       for (let i = 0; i < files.length; i++) {
         let reader = new FileReader();
         let vm = this;
 
+        reader.readAsDataURL(files[i]);
+
         reader.onload = function(e) {
-          vm.files[i] = e.target.result;
+          vm.files[i] = reader.result;
         };
 
-        reader.readAsDataURL(files[i]);
       }
 
     },
 
     removeFile(_index) {
-      this.files.splice(_index,1);
+      this.files.splice(_index, 1);
     }
   }
 };
@@ -116,7 +158,7 @@ export default {
 
 <style>
 * {
-  font-family: 'Arial';
+  font-family: 'Arial', serif;
   font-size: 12px;
 }
 
@@ -142,7 +184,8 @@ html, body {
   cursor: pointer;
   display: inline-block;
   font-weight: bold;
-  padding: 15px 35px;
+  margin: 5px 0px;
+  padding: 5px 20px;
   position: relative;
 }
 
@@ -180,24 +223,30 @@ input[type="file"] {
   vertical-align: middle;
 }
 
-.img {
+.image-preview {
   border: 1px solid #f6f6f6;
   display: inline-block;
   height: auto;
-  max-height: 80%;
-  max-width: 80%;
+  max-height: 30%;
+  max-width: 30%;
   width: auto;
 }
 
-.drop {
+.drop-box {
   background-color: #f2f2f2;
   border: 4px dashed #ccc;
-  background-color: #f6f6f6;
   border-radius: 2px;
-  height: 100%;
-  max-height: 400px;
-  max-width: 600px;
-  width: 100%;
+  width: 600px;
+  height: 500px;
+  cursor: pointer;
+}
+
+.file-input {
+  display: none;
+}
+
+.input-message {
+  font-size: 30px;
 }
 </style>
 

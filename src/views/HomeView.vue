@@ -6,19 +6,19 @@
 
     <hr>
 
-    <h1 class="text-2xl text-rose-500 my-4"> Single file selector </h1>
-    <file-selector
-      :enableType="true"
-      label="Please Select an File"
-      @getUploadedFile="getFile"
-    />
+<!--    <h1 class="text-2xl text-green-500 my-4"> Single file selector </h1>-->
+<!--    <file-selector-->
+<!--      :enableType="true"-->
+<!--      label="Please Select/Drag a File"-->
+<!--      @getUploadedFile="getFile"-->
+<!--    />-->
 
     <hr/>
 
     <h1 class="text-2xl text-rose-500 my-4"> Multiple files selector </h1>
     <multiple-file-selector
       :enableType="true"
-      label="Please Select Files"
+      label="Please Select/Drag & Drop Files"
       @getUploadedFiles="getFiles"
     />
 

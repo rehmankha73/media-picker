@@ -1,35 +1,39 @@
 <template>
-  <div class="drop display-inline align-center mt-6" @dragover.prevent @drop="onDrop">
-    <label v-if="!file" class="btn display-inline mt-2">
+  <div class="drop-box display-inline align-center mt-6" @dragover.prevent @drop="onDrop"
+       @click="$refs['file-input'].click()"
+  >
+    <label v-if="!file" class="input-message mt-2">
       {{ label }}
-      <input type="file" name="image" @change="onChange">
+      <input class="file-input" ref="file-input" type="file" name="image" @change="onChange">
     </label>
     <label v-else class="hidden display-inline align-center" :class="{ 'image': true }">
       <div>
+        <img v-if="file && fileType === 'image/*'" :src="file" :alt="file.name" width="50px" height="50px" class="image-preview" />
         <br>
-        <button class="btn mt-2" @click="removeFile">REMOVE</button>
+        <button class="btn mt-2" @click.stop="removeFile">REMOVE</button>
       </div>
     </label>
   </div>
+  <br>
+  <span v-if="error" class="text-danger">{{ error }}</span>
 
   <div v-if="enableType" class="mt-4">
     <label for="fileType" v-if="enableType">Type of files:</label>
     <input v-model="fileType" type="text" id="fileType"
-           class="shadow appearance-none border rounded w-1/2 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+           class="w-1/2 py-2 px-3 "
            v-if="enableType">
   </div>
 
   <p class="mt-4">
-    Name: {{ this.file_data.name }}<br>
-    Extensions: {{ this.file_data.type }}<br>
+    <span v-if="this.file_data.name">Name: {{ this.file_data.name }}<br></span>
+    <span v-if="this.file_data.type">Extensions: {{ this.file_data.type }}<br></span>
     Uploaded File: {{ no_of_files ? no_of_files : 0 }}
   </p>
 
-  <img v-if="fileType === 'image/*'" :src="file" alt="" class="img" />
+  <img v-if="fileType === 'image/*'" :src="file" :alt="file.name" />
 
-  <video v-if="fileType === 'video/*' && file_data.type === 'video/mp4'" width="320" height="240" class="mx-auto block" controls>
-    <source :src="file" type="video/mp4">
-  </video>
+  <video id="video-preview" v-if="fileType === 'video/*' && file_data.type === 'video/mp4'"  controls :src="file"/>
+
 
 </template>
 
@@ -41,6 +45,7 @@ export default {
       file_data: "",
       file: "",
       fileType: "image/*",
+      error: "",
       no_of_files: "",
       file_extension: ""
     };
@@ -53,6 +58,10 @@ export default {
     enableType: {
       type: Boolean,
       default: false
+    },
+    formErrors:{
+      type: String,
+      default: "Please Select File of appropriate type, default:images",
     }
   },
   watch: {
@@ -72,31 +81,44 @@ export default {
       e.stopPropagation();
       e.preventDefault();
       let files = e.dataTransfer.files;
+
+      // Validations errors
+      if (!files[0].type.match(this.fileType)) {
+        this.error = this.formErrors;
+        alert(this.formErrors);
+        return;
+      }
+
       this.file_data = files[0];
       this.createFile(files[0]);
     },
 
     onChange(e) {
       let files = e.target.files;
-      console.log(files);
+
+      // Validations errors
+      if (!files[0].type.match(this.fileType)) {
+        this.error = this.formErrors;
+        alert(this.formErrors);
+        return;
+      }
+
       this.file_data = files[0];
       this.createFile(files[0]);
 
     },
 
     createFile(file) {
-      if (!file.type.match(this.fileType)) {
-        alert("Please Select File of appropriate type, default:images");
-        return;
-      }
 
       let reader = new FileReader();
       let vm = this;
 
-      reader.onload = function(e) {
-        vm.file = e.target.result;
-      };
       reader.readAsDataURL(file);
+
+      reader.onload = function(e) {
+        vm.file = reader.result;
+      };
+
     },
 
     removeFile() {
@@ -108,7 +130,7 @@ export default {
 
 <style>
 * {
-  font-family: 'Arial';
+  font-family: 'Arial', serif;
   font-size: 12px;
 }
 
@@ -134,7 +156,8 @@ html, body {
   cursor: pointer;
   display: inline-block;
   font-weight: bold;
-  padding: 15px 35px;
+  margin-top: 2px;
+  padding: 15px 30px;
   position: relative;
 }
 
@@ -172,24 +195,30 @@ input[type="file"] {
   vertical-align: middle;
 }
 
-.img {
+.image-preview {
   border: 1px solid #f6f6f6;
   display: inline-block;
   height: auto;
-  max-height: 80%;
-  max-width: 80%;
+  max-height: 30%;
+  max-width: 30%;
   width: auto;
 }
 
-.drop {
+.drop-box {
   background-color: #f2f2f2;
   border: 4px dashed #ccc;
-  background-color: #f6f6f6;
   border-radius: 2px;
-  height: 100%;
-  max-height: 400px;
-  max-width: 600px;
-  width: 100%;
+  width: 600px;
+  height: 400px;
+  cursor: pointer;
+}
+
+.file-input {
+  display: none;
+}
+
+.input-message {
+  font-size: 30px;
 }
 </style>
 
