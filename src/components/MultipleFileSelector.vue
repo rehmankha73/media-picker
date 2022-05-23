@@ -12,10 +12,10 @@
         <img v-if="file && fileType === 'image/*'" :src="file" :alt="file.name"
              class="image-preview" />
 
-        <embed v-if="file && fileType === 'application/*'" :src="file"
+        <embed v-else-if="file && fileType === 'application/*'" :src="file"
                class="d-block" style="width: 100px; height: 100px" />
 
-        <img v-if="file && fileType === 'video/*'" :src="video_thumbnails[index]" :alt="file.name"
+        <img v-else-if="file && fileType === 'video/*'" :src="video_thumbnails[index]" :alt="file.name"
              class="d-block" style="width: 100px; height: 100px" />
 
         <p class="mt-4 d-block">
