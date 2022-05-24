@@ -10,13 +10,15 @@
       <div v-for="(file, index) in files" class="d-flex justify-content-between my-2">
 
         <img v-if="file && fileType === 'image/*'" :src="file" :alt="file.name"
-             class="image-preview" />
+             @click="openModal(file, 'image')"
+             class="image-preview cursor-pointer" />
 
         <embed v-else-if="file && fileType === 'application/*'" :src="file"
-               class="d-block" style="width: 100px; height: 100px" />
+               class="d-block cursor-pointer" style="width: 100px; height: 100px" />
 
         <img v-else-if="file && fileType === 'video/*'" :src="video_thumbnails[index]" :alt="file.name"
-             class="d-block" style="width: 100px; height: 100px" />
+             @click="openModal(file, 'video')"
+             class="d-block cursor-pointer" style="width: 100px; height: 100px" />
 
         <p class="mt-4 d-block">
           Name: {{ files_data[index].name }}<br>
@@ -38,30 +40,37 @@
            v-if="enableType">
   </div>
 
-  {{ files }}
-
   Uploaded Files: {{ no_of_files ? no_of_files : 0 }}
   <div v-for="(file,index) in files">
     <p class="mt-4">
       Name: {{ files_data[index].name }}<br>
       Extensions: {{ files_data[index].type }}<br>
     </p>
-
-    <button class="btn mt-2" @click="removeFile(index)">REMOVE</button>
-    <br>
-
-    <img v-if="fileType === 'image/*'" :src="file" alt="" class="img" />
-
-    <video v-if="fileType === 'video/*' && this.files_data[index].type === 'video/mp4'" width="320" height="240"
-           class="mx-auto block" controls>
-      <source :src="file" type="video/mp4">
-    </video>
-
   </div>
+
+  <div id="myModal" class="modal">
+    <span class="close cursor" @click="closeModal()">&times;</span>
+    <div class="modal-content">
+      <div v-if="fileType === 'image/*'" id="image-slide" style="display: none;background: black">
+        <img src="../assets/logo.png" id="modal-image" alt="image"
+             style="width: 500px; height: 500px;background: black">
+      </div>
+
+      <div v-if="fileType === 'video/*'" id="video-slide" style="display: none; background: black">
+        <video id="modal-video"
+               style="width: 500px; height: 500px; background: black"
+               class="mx-auto block" controls>
+          <source src="" type="video/mp4" id="modal-video-source">
+        </video>
+      </div>
+    </div>
+  </div>
+
 
 </template>
 
 <script>
+
 export default {
   name: "FileSelector",
   data() {
@@ -71,7 +80,7 @@ export default {
       no_of_files: "",
       files_data: [],
       files: [],
-      fileType: "image/*"
+      fileType: "video/*"
     };
   },
   props: {
@@ -91,7 +100,7 @@ export default {
   watch: {
     files: {
       handler(newVal) {
-        if(newVal.length === 0) {
+        if (newVal.length === 0) {
           this.video_thumbnails = [];
         }
         this.no_of_files = this.files.length;
@@ -100,6 +109,33 @@ export default {
     }
   },
   methods: {
+    openModal(_file, _type) {
+      let image_slide = document.getElementById("image-slide");
+      let modal_image = document.getElementById("modal-image");
+      let video_slide = document.getElementById("video-slide");
+      let modal_video = document.getElementById("modal-video");
+      let modal_video_source = document.getElementById("modal-video-source");
+
+      if (_type && _type === "image") {
+        image_slide.style.display = "block";
+        modal_image.src = _file;
+      }
+
+      if (_type && _type === "video") {
+        video_slide.style.display = "block";
+
+        modal_video_source.setAttribute("src", _file);
+
+        modal_video.load();
+      }
+      document.getElementById("myModal").style.display = "block";
+    },
+
+    closeModal() {
+
+      document.getElementById("myModal").style.display = "none";
+    },
+
     async generateThumbnail(item) {
       console.log(item);
       console.log("thumbnail");
@@ -173,11 +209,10 @@ export default {
       this.createFile(_valid_files);
     },
 
-    createFile(_files) {
+    async createFile(_files) {
       for (let i = 0; i < _files.length; i++) {
         let reader = new FileReader();
         let vm = this;
-
         reader.readAsDataURL(_files[i]);
 
         reader.onload = function(e) {
@@ -188,6 +223,7 @@ export default {
           this.generateThumbnail(_files[i]);
         }
 
+        this.error = "";
       }
 
     },
@@ -267,6 +303,10 @@ input[type="file"] {
   vertical-align: middle;
 }
 
+.cursor-pointer {
+  cursor: pointer;
+}
+
 .image-preview {
   border: 1px solid #f6f6f6;
   display: inline-block;
@@ -291,6 +331,143 @@ input[type="file"] {
 
 .input-message {
   font-size: 30px;
+}
+
+/*Modal Css*/
+body {
+  font-family: Verdana, sans-serif;
+  margin: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.row > .column {
+  padding: 0 8px;
+}
+
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+.column {
+  float: left;
+  width: 25%;
+}
+
+/* The Modal (background) */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1;
+  padding-top: 100px;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: black;
+}
+
+/* Modal Content */
+.modal-content {
+  position: relative;
+  background-color: #fefefe;
+  margin: auto;
+  padding: 0;
+  width: 90%;
+  max-width: 1200px;
+}
+
+/* The Close Button */
+.close {
+  color: white;
+  position: absolute;
+  top: 10px;
+  right: 25px;
+  font-size: 35px;
+  font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+  color: #999;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.cursor {
+  cursor: pointer;
+}
+
+/* Next & previous buttons */
+.prev,
+.next {
+  cursor: pointer;
+  position: absolute;
+  top: 50%;
+  width: auto;
+  padding: 16px;
+  margin-top: -50px;
+  color: white;
+  font-weight: bold;
+  font-size: 20px;
+  transition: 0.6s ease;
+  border-radius: 0 3px 3px 0;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Position the "next button" to the right */
+.next {
+  right: 0;
+  border-radius: 3px 0 0 3px;
+}
+
+/* On hover, add a black background color with a little bit see-through */
+.prev:hover,
+.next:hover {
+  background-color: rgba(0, 0, 0, 0.8);
+}
+
+/* Number text (1/3 etc) */
+.numbertext {
+  color: #f2f2f2;
+  font-size: 12px;
+  padding: 8px 12px;
+  position: absolute;
+  top: 0;
+}
+
+img {
+  margin-bottom: -4px;
+}
+
+.caption-container {
+  text-align: center;
+  background-color: black;
+  padding: 2px 16px;
+  color: white;
+}
+
+.demo {
+  opacity: 0.6;
+}
+
+.active,
+.demo:hover {
+  opacity: 1;
+}
+
+img.hover-shadow {
+  transition: 0.3s;
+}
+
+.hover-shadow:hover {
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 </style>
 
