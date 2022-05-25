@@ -4,7 +4,7 @@
     <HelloWorld msg="Bismillah !" />
     <h1 class="text-green-500">Welcome to Vue Media Picker</h1>
 
-    <hr>
+<!--    <hr>-->
 
 <!--    <h1 class="text-2xl text-green-500 my-4"> Single file selector </h1>-->
 <!--    <file-selector-->
@@ -13,14 +13,23 @@
 <!--      @getUploadedFile="getFile"-->
 <!--    />-->
 
-    <hr/>
+<!--    <hr/>-->
 
-    <h1 class="text-2xl text-rose-500 my-4"> Multiple files selector </h1>
-    <multiple-file-selector
-      :enableType="true"
-      label="Please Select/Drag & Drop Files"
-      @getUploadedFiles="getFiles"
-    />
+<!--    <h1 class="text-2xl text-rose-500 my-4"> Multiple files selector </h1>-->
+<!--    <multiple-file-selector-->
+<!--      :enableType="true"-->
+<!--      label="Please Select/Drag & Drop Files"-->
+<!--      @getUploadedFiles="getFiles"-->
+<!--    />-->
+
+    <h1> Media Selector </h1>
+    <div class="mx-auto" style="width:50%">
+      <media-selector
+        :enableType="true"
+        label="Accept images, videos & 3D modal"
+        @getUploadedFiles="getFiles"
+      />
+    </div>
 
     <div class="mt-10">!!The End!!</div>
 
@@ -32,13 +41,15 @@
 import HelloWorld from "@/components/HelloWorld.vue";
 import FileSelector from "@/components/FileSelector.vue";
 import MultipleFileSelector from "@/components/MultipleFileSelector.vue";
+import MediaSelector from "@/components/MediaSelector.vue";
 
 export default {
   name: "HomeView",
   components: {
     HelloWorld,
     FileSelector,
-    MultipleFileSelector
+    MultipleFileSelector,
+    MediaSelector,
   },
   methods: {
     getFile(_data) {
