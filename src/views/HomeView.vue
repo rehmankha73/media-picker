@@ -25,9 +25,11 @@
     <h1> Media Selector </h1>
     <div class="mx-auto" style="width:50%">
       <media-selector
-        :enableType="true"
+        :showAllowedTypes="true"
+        allowedTypes="image/png,video/mp4,application/pdf"
         label="Accept images, videos & 3D modal"
         @getUploadedFiles="getFiles"
+
       />
     </div>
 

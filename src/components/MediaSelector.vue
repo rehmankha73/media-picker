@@ -7,9 +7,9 @@
     <div v-show="files.length === 0" class="label-overview mt-2">
       <div class="">
         <button
-          @click="files.length === 0 ? $refs['file-input'].click() : ''"
           class="file-button"
           type="button"
+          @click="files.length === 0 ? $refs['file-input'].click() : ''"
         >
           Add file
         </button>
@@ -25,25 +25,30 @@
       <div class="row mt-2">
         <div v-for="(file, index) in files" class="col-3 preview-item position-relative">
 
-          <img v-if="file && this.fileType === 'image/*'"
-               :src="file.url"
-               alt="logo"
-               @click="openModal(file.url, 'image')"
-               class="image-preview"
+          <img
+            v-if="file && start_with(file.type, 'image') && (this.fileTypes.includes('image/*') || (this.fileTypes.includes(file.type)))"
+            :src="file.url"
+            alt="logo"
+            class="image-preview"
+            @click="openModal(file.url, 'image')"
           />
 
-
-          <img v-if="file && this.fileType === 'video/*'"
-               @click="openModal(file.url, 'video')"
-               :src="file.thumbnail.thumbnail"
-               alt="logo"
-               class="image-preview"
+          <img
+            v-if="file && start_with(file.type, 'video') && (this.fileTypes.includes('video/*') || (this.fileTypes.includes(file.type)))"
+            :src="file.thumbnail.thumbnail"
+            alt="logo"
+            class="image-preview"
+            @click="openModal(file.url, 'video')"
           />
 
-          <embed v-else-if="file && fileType === 'application/*'" :src="file.url"
-                 class="d-block cursor-pointer" style="width: 100%; height: 100%; object-fit:cover;" />
+          <embed
+            v-else-if="file && start_with(file.type, 'application') && (this.fileTypes.includes('application/*') || (this.fileTypes.includes(file.type)))"
+            :src="file.url"
+            class="d-block cursor-pointer" style="width: 100%; height: 100%; object-fit:cover;" />
 
-          <button class="mt-2 position-absolute danger-button" style="top: -8px; right: 0px" type="button" @click.self="removeFile(index)">X</button>
+          <button class="mt-2 position-absolute danger-button" style="top: -8px; right: 0px" type="button"
+                  @click.self="removeFile(index)">X
+          </button>
         </div>
 
         <div class="col-3 preview-item" style="padding-top: 20px; margin-left: 10px">
@@ -67,11 +72,8 @@
   <br>
   <span v-if="error" class="text-danger">{{ error }}</span>
 
-  <div v-if="enableType" class="mt-4">
-    <label v-if="enableType" for="fileType">Type of files:</label>
-    <input v-if="enableType" id="fileType" v-model="fileType"
-           class="shadow appearance-none border rounded w-1/2 py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-           type="text">
+  <div v-if="showAllowedTypes" class="mt-4">
+    <span><b>Type of files:</b> {{ allowedTypes }}</span>
   </div>
 
   Uploaded Files: {{ no_of_files ? no_of_files : 0 }}
@@ -79,12 +81,12 @@
   <div id="myModal" class="modal">
     <span class="close cursor-pointer" @click="closeModal()">&times;</span>
     <div class="modal-content">
-      <div v-if="fileType === 'image/*'" id="image-slide" style="display: none;background: black">
-        <img id="modal-image" alt="image" src="../assets/logo.png"
+      <div id="image-slide" style="display: none;background: black">
+        <img v-if="start_with" id="modal-image" alt="image" src="../assets/logo.png"
              style="width: 500px; height: 500px;background: black">
       </div>
 
-      <div v-if="fileType === 'video/*'" id="video-slide" style="display: none; background: black">
+      <div id="video-slide" style="display: none; background: black">
         <video id="modal-video"
                class="mx-auto block"
                controls style="width: 500px; height: 500px; background: black">
@@ -98,33 +100,41 @@
 <script>
 export default {
   name: "FileSelector",
-  data() {
-    return {
-      error: "",
-      no_of_files: "",
-      files: [],
-      fileType: "video/*"
-    };
-  },
   props: {
     label: {
       type: String,
       default: "SELECT OR DROP AN IMAGES/FILES"
     },
-    enableType: {
+    showAllowedTypes: {
       type: Boolean,
       default: false
     },
     formErrors: {
       type: String,
       default: "PLease Upload related typed documents which are allowed!"
+    },
+    allowedTypes: {
+      type: String,
+      default: "image/*"
+    }
+  },
+
+  data() {
+    return {
+      error: "",
+      no_of_files: "",
+      files: []
+    };
+  },
+  computed: {
+    fileTypes() {
+      return this.allowedTypes.split(",");
     }
   },
 
   watch: {
     files: {
       handler(newVal) {
-
         this.no_of_files = this.files.length;
         this.$emit("getUploadedFiles", this.files);
       }, deep: true
@@ -134,109 +144,100 @@ export default {
     this.files = [];
   },
   methods: {
-    onDrop: function(e) {
+
+    onDrop(e) {
       e.stopPropagation();
       e.preventDefault();
       let _files = e.dataTransfer.files;
-      let _valid_files = [];
-
-      for (let f = 0; f < _files.length; f++) {
-        if (!_files[f].type.match(this.fileType)) {
-          this.error = this.formErrors;
-          alert(this.formErrors);
-          break;
-        }
-        _valid_files.push(_files[f]);
-      }
-
-      this.createFile(_valid_files);
+      this.uploadFiles(this.validateAndUploadData(_files));
+      console.log(this.files, "files");
     },
 
     onChange(e) {
       let _files = e.target.files;
-      let _valid_files = [];
-      for (let f = 0; f < _files.length; f++) {
-        if (!_files[f].type.match(this.fileType)) {
-          this.error = this.formErrors;
-          alert(this.formErrors);
-          break;
-        }
-        _valid_files.push(_files[f]);
-      }
-
-      // this.createFile(_valid_files);
-      this.uploadFiles(_valid_files);
-      console.log(this.files, 'files');
+      this.uploadFiles(this.validateAndUploadData(_files));
+      console.log(this.files, "files");
     },
 
+    validateAndUploadData(_files) {
+      let _data = [];
+      for (let f = 0; f < _files.length; f++) {
+
+        let _file_type = _files[f].type.split("/");
+        let _file_starts_with = _file_type[0];
+
+        // type validation for image
+        if (!this.fileTypes.includes("image/*")) {
+          if (!this.fileTypes.includes(_files[f].type) && _file_starts_with === "image") {
+            this.error = "File is not an image, or a selected type of image like image/png";
+            alert(this.error);
+            break;
+          }
+        }
+
+        // type validation for Video
+        if (!this.fileTypes.includes("video/*")) {
+          if (!this.fileTypes.includes(_files[f].type) && _file_starts_with === "video") {
+            this.error = "File is not a video, or a selected type of image like video/mp4";
+            alert(this.error);
+            break;
+          }
+        }
+
+        // type validation for application
+        if (!this.fileTypes.includes("application/*")) {
+          if (!this.fileTypes.includes(_files[f].type) && _file_starts_with === "application") {
+            this.error = "File is not a document, or a selected type of image like application/pdf";
+            alert(this.error);
+            break;
+          }
+        }
+
+        _data.push(_files[f]);
+      }
+      return _data;
+    },
+
+
     async uploadFiles(files) {
-      this.no_of_files = 0
-      await this.handleMedia(files)
-      this.files = [...this.files]
+      this.no_of_files = 0;
+      await this.handleMedia(files);
+      this.files = [...this.files];
     },
 
     async handleMedia(files) {
-
       for (let i = 0; i < files.length; i++) {
-        if ((files[i].type.includes('image') && files[i].size < 5242880) || (files[i].type.includes('video') && files[i].size < 209715200)) {
-          try {
-            const fileData = {
-              file: files[i],
-              url: URL.createObjectURL(files[i]),
-              name: files[i].name,
-              type: files[i].type,
-              size: files[i].size
-            }
+        // if ((files[i].type.includes("image") && files[i].size < 5242880) || (files[i].type.includes("video") && files[i].size < 209715200)) {
+        try {
+          const fileData = {
+            file: files[i],
+            url: URL.createObjectURL(files[i]),
+            name: files[i].name,
+            type: files[i].type,
+            size: files[i].size
+          };
 
-            if (fileData.type.includes('video')) {
-              const thumbnail = {
-                file: null,
-                thumbnail: null
-              }
+          if (fileData.type.includes("video")) {
+            const thumbnail = {
+              file: null,
+              thumbnail: null
+            };
 
-              thumbnail.file = await this.generateThumbnail(files[i])
-              thumbnail['thumbnail'] = URL.createObjectURL(thumbnail.file)
-              fileData.thumbnail = thumbnail
-            }
-
-            this.files.push(fileData);
-            this.no_of_files= this.files.length
-          } catch (e) {
-            console.log('Some error occurred. ' + files[i].name + ' cannot be selected.')
+            thumbnail.file = await this.generateThumbnail(files[i]);
+            thumbnail["thumbnail"] = URL.createObjectURL(thumbnail.file);
+            fileData.thumbnail = thumbnail;
           }
-        } else {
-          console.log(files[i].type.includes('image') ? files[i].name + ' is too large. Max size allowed is 5 Mb' : files[i].name + ' is too large. Max size allowed is 200 Mb')
+
+          this.files.push(fileData);
+          this.no_of_files = this.files.length;
+
+          this.error = "";
+        } catch (e) {
+          console.log("Some error occurred. " + files[i].name + " cannot be selected.");
         }
-      }
-    },
-
-    async createFile(_files) {
-      for (let i = 0; i < _files.length; i++) {
-
-        let reader = new FileReader();
-        let vm = this;
-        reader.readAsDataURL(_files[i]);
-
-        let _obj = {};
-
-        if (_files[i].type.match("video/*")) {
-          _obj = {
-            _thumbnail: await this.generateThumbnail(_files[i]),
-            video: ""
-          };
-
-          reader.onload = function(e) {
-            console.log('Test')
-            _obj.video = reader.result;
-            console.log(_obj, "object");
-            vm.files.push(_obj);
-          };
-        }
-
-        reader.onload = function(e) {
-          vm.files.push(reader.result);
-        };
-        this.error = "";
+        // } else {
+        //   console.log(files[i].type.includes("image") ? files[i].name + " is too large. Max size allowed is 5 Mb" : files[i].name + " is too large. Max size allowed is 200 Mb");
+        // }
       }
     },
 
@@ -286,11 +287,14 @@ export default {
 
       if (_type && _type === "image") {
         image_slide.style.display = "block";
+        video_slide.style.display = "none";
+
         modal_image.src = _file;
       }
 
       if (_type && _type === "video") {
         video_slide.style.display = "block";
+        image_slide.style.display = "none";
 
         modal_video_source.setAttribute("src", _file);
 
@@ -301,7 +305,13 @@ export default {
 
     closeModal() {
       document.getElementById("myModal").style.display = "none";
-    }
+    },
+
+    start_with(_type, _start_with) {
+      let file_start_with = _type.split("/");
+      return file_start_with[0] === _start_with;
+    },
+
   }
 };
 </script>
