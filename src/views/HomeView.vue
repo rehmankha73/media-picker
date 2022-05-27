@@ -9,7 +9,7 @@
 <!--    <h1 class="text-2xl text-green-500 my-4"> Single file selector </h1>-->
 <!--    <file-selector-->
 <!--      :enableType="true"-->
-<!--      label="Please Select/Drag a File"-->
+<!--      label="Please Se![](C:/Users/rehmanahmed/Desktop/right_icon.png)![](C:/Users/rehmanahmed/Desktop/left_icon.png)lect/Drag a File"-->
 <!--      @getUploadedFile="getFile"-->
 <!--    />-->
 

@@ -30,7 +30,7 @@
             :src="file.url"
             alt="logo"
             class="image-preview"
-            @click="openModal(file.url, 'image')"
+            @click="openModal(index, 'image')"
           />
 
           <img
@@ -38,13 +38,19 @@
             :src="file.thumbnail.thumbnail"
             alt="logo"
             class="image-preview"
-            @click="openModal(file.url, 'video')"
+            @click="openModal(index, 'video')"
           />
 
+<!--          <div-->
+<!--            v-else-if="file && start_with(file.type, 'application') && (this.fileTypes.includes('application/*') || (this.fileTypes.includes(file.type)))"-->
+<!--             @click="showPDF(file.url)"-->
+<!--          >-->
           <embed
             v-else-if="file && start_with(file.type, 'application') && (this.fileTypes.includes('application/*') || (this.fileTypes.includes(file.type)))"
             :src="file.url"
-            class="d-block cursor-pointer" style="width: 100%; height: 100%; object-fit:cover;" />
+            class="d-block cursor-pointer" style="width: 100%; height: 100%; object-fit:cover;cursor: pointer"
+            />
+<!--          </div>-->
 
           <button class="mt-2 position-absolute danger-button" style="top: -8px; right: 0px" type="button"
                   @click.self="removeFile(index)">X
@@ -79,21 +85,39 @@
   Uploaded Files: {{ no_of_files ? no_of_files : 0 }}
 
   <div id="myModal" class="modal">
-    <span class="close cursor-pointer" @click="closeModal()">&times;</span>
-    <div class="modal-content">
-      <div id="image-slide" style="display: none;background: black">
-        <img v-if="start_with" id="modal-image" alt="image" src="../assets/logo.png"
-             style="width: 500px; height: 500px;background: black">
+    <input type="hidden" id="index" value="0" />
+    <div class="modal-title d-flex justify-content-start" >
+      <h1 id="title-file-name" class="heading" style="margin-left: 40px"></h1>
+      <span class="close cursor-pointer" @click="closeModal()">&times;</span>
+    </div>
+
+    <div class="d-flex flex-row" style="height: auto;">
+      <div class="modal-content position-relative">
+        <img id="left-icon" @click="previous" class="cursor-pointer left-arrow" src="../assets/left_icon.png" alt="left_icon" />
+        <div id="image-slide" style="display: block">
+          <img id="modal-image" alt="image" src="../assets/logo.png"
+               style="width: 500px; height: 500px;background: rgba(0,0,0,0.7)">
+        </div>
+
+        <div id="video-slide" style="display: none;">
+          <video id="modal-video"
+                 class="mx-auto block"
+                 controls style="width: 500px; height: 500px; ;background: rgba(0,0,0,0.7)">
+            <source id="modal-video-source" src="" type="video/mp4">
+          </video>
+        </div>
+        <img id="right-icon" @click="next" class="cursor-pointer right-arrow" src="../assets/right_icon.png" alt="right_icon"/>
       </div>
 
-      <div id="video-slide" style="display: none; background: black">
-        <video id="modal-video"
-               class="mx-auto block"
-               controls style="width: 500px; height: 500px; background: black">
-          <source id="modal-video-source" src="" type="video/mp4">
-        </video>
+      <div class="modal-sidebar">
+        <h1 class="heading">File Details</h1>
+        <p class="item"><b>File Name:</b> <span id="file-name"></span></p>
+        <p class="item"><b>File Type:</b> <span id="file-type"></span></p>
+        <p class="item"><b>File Size:</b> <span id="file-size"></span></p>
+
       </div>
     </div>
+
   </div>
 </template>
 
@@ -144,6 +168,11 @@ export default {
     this.files = [];
   },
   methods: {
+
+    showPDF(file) {
+      console.log(file);
+      window.open(file, "_blank");
+    },
 
     onDrop(e) {
       e.stopPropagation();
@@ -197,7 +226,6 @@ export default {
       }
       return _data;
     },
-
 
     async uploadFiles(files) {
       this.no_of_files = 0;
@@ -278,39 +306,115 @@ export default {
       this.files.splice(_index, 1);
     },
 
-    openModal(_file, _type) {
+    openModal(index, _type) {
       let image_slide = document.getElementById("image-slide");
       let modal_image = document.getElementById("modal-image");
       let video_slide = document.getElementById("video-slide");
       let modal_video = document.getElementById("modal-video");
+      let title_file_name = document.getElementById("title-file-name");
+      let file_name = document.getElementById("file-name");
+      let file_type = document.getElementById("file-type");
+      let file_size = document.getElementById("file-size");
       let modal_video_source = document.getElementById("modal-video-source");
+      let left_icon = document.getElementById("left-icon");
+      let right_icon = document.getElementById("right-icon");
+      let _index = document.getElementById("index");
+
+      title_file_name.innerHTML = "";
+      file_name.innerHTML = "";
+      file_type.innerHTML = "";
+      file_size.innerHTML = "";
+      _index.value = index;
+      console.log(_index.value)
+
+      if(_index.value > 0) {
+        left_icon.style.display = "block";
+      } else {
+        left_icon.style.display = "none";
+      }
+
+      if(_index.value < this.files.length - 1) {
+        right_icon.style.display = "block";
+      }else {
+        right_icon.style.display = "none";
+      }
 
       if (_type && _type === "image") {
         image_slide.style.display = "block";
         video_slide.style.display = "none";
 
-        modal_image.src = _file;
+        title_file_name.innerHTML = this.files[index].name;
+        file_name.innerHTML = this.files[index].name;
+        file_type.innerHTML = this.files[index].type;
+        file_size.innerHTML = this.files[index].size;
+        modal_image.src = this.files[index].url;
       }
 
       if (_type && _type === "video") {
         video_slide.style.display = "block";
         image_slide.style.display = "none";
 
-        modal_video_source.setAttribute("src", _file);
+        title_file_name.innerHTML = this.files[index].name;
+        file_name.innerHTML = this.files[index].name;
+        file_type.innerHTML = this.files[index].type;
+        file_size.innerHTML = this.files[index].size;
+
+        modal_video_source.setAttribute("src", this.files[index].url);
 
         modal_video.load();
       }
       document.getElementById("myModal").style.display = "block";
     },
 
+    previous() {
+      let _index_element = document.getElementById("index");
+      let _index = parseInt(_index_element.value);
+      if( _index > 0) {
+        _index_element.value = _index - 1;
+        let _new_index = _index - 1;
+        let _file = this.files[_new_index].type.split('/');
+        if(this.start_with(_file[0], 'image')) {
+          this.openModal(_new_index, 'image');
+        }
+
+        if(this.start_with(_file[0], 'video')) {
+          this.openModal(_new_index, 'video');
+        }
+      }
+    },
+
+    next() {
+      let _index_element = document.getElementById("index");
+      let _index = parseInt(_index_element.value);
+      if(_index < this.files.length - 1) {
+        _index_element.value = _index + 1;
+        let _new_index = _index + 1;
+        let _file = this.files[_new_index].type.split('/');
+        if(this.start_with(_file[0], 'image')) {
+          this.openModal(_new_index, 'image');
+        }
+
+        if(this.start_with(_file[0], 'video')) {
+          this.openModal(_new_index, 'video');
+        }
+      }
+    },
+
     closeModal() {
+      document.getElementById("title-file-name").innerHTML = '';
+      document.getElementById("file-name").innerHTML = '';
+      document.getElementById("file-type").innerHTML = '';
+      document.getElementById("file-size").innerHTML = '';
+      document.getElementById("modal-video").pause();
+      document.getElementById("modal-video-source").src = '';
+
       document.getElementById("myModal").style.display = "none";
     },
 
     start_with(_type, _start_with) {
       let file_start_with = _type.split("/");
       return file_start_with[0] === _start_with;
-    },
+    }
 
   }
 };
@@ -443,32 +547,75 @@ input[type="file"] {
   display: none;
 }
 
-
 .modal {
+  padding-top: 0px;
   display: none;
   position: fixed;
   z-index: 1;
-  padding-top: 100px;
   left: 0;
   top: 0;
   width: 100%;
   height: 100%;
-  overflow: auto;
-  background-color: black;
+  background-color: rgba(0, 0, 0);
+}
+
+.modal-title {
+  padding: 20px 0px;
+  width: 100%;
+  background-color: rgba(0, 0, 0);
 }
 
 .modal-content {
   position: relative;
-  background-color: #fefefe;
+  background-color: rgba(0, 0, 0, 0.7);
   margin: auto;
   padding: 0;
-  width: 90%;
+  width: 70%;
   max-width: 1200px;
 }
 
-.close {
+.modal-sidebar {
+  position: relative;
+  background-color: rgba(0, 0, 0);
+  padding: 0;
+  width: 30%;
+  max-width: 1200px;
+}
+
+.heading {
+  margin: 20px 0px;
   color: white;
+  text-align: left;
+  font-size: large;
+}
+
+.left-arrow{
+  display: none;
   position: absolute;
+  width: 50px;
+  height: 50px;
+  top: 280px;
+}
+
+.right-arrow{
+  display: none;
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  top: 280px;
+  left: 815px;
+}
+
+.item {
+  text-align: left;
+  color: white;
+  font-size: medium;
+}
+
+.close {
+  color: lightgray;
+  position: absolute;
+  top: 10px;
   top: 10px;
   right: 25px;
   font-size: 35px;
@@ -477,7 +624,7 @@ input[type="file"] {
 
 .close:hover,
 .close:focus {
-  color: #999;
+  color: red;
   text-decoration: none;
   cursor: pointer;
 }
