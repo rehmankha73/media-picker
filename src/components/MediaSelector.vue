@@ -7,13 +7,16 @@
     <div v-show="files.length === 0" class="label-overview mt-2">
       <div class="">
         <button
-          class="file-button"
+          class="file-button cursor-pointer"
           type="button"
           @click="files.length === 0 ? $refs['file-input'].click() : ''"
         >
           Add file
         </button>
-        <span class="url-link">Add from url</span>
+        <span
+          class="url-link"
+          @click="files.length === 0 ? $refs['file-input'].click() : ''"
+        >Add from url</span>
         <p class="label-overview mt-2">
           {{ label }}
         </p>
@@ -23,7 +26,7 @@
 
     <div v-if="files.length > 0 " id="uploads-div" class="preview-div p-2 mt-2 overflow-hidden">
       <div class="row mt-2">
-        <div v-for="(file, index) in files" class="col-3 preview-item position-relative">
+        <div v-for="(file, index) in files" class="col-3 preview-item position-relative mr-2">
 
           <img
             v-if="file && start_with(file.type, 'image') && (this.fileTypes.includes('image/*') || (this.fileTypes.includes(file.type)))"
@@ -41,32 +44,38 @@
             @click="openModal(index, 'video')"
           />
 
-<!--          <div-->
-<!--            v-else-if="file && start_with(file.type, 'application') && (this.fileTypes.includes('application/*') || (this.fileTypes.includes(file.type)))"-->
-<!--             @click="showPDF(file.url)"-->
-<!--          >-->
-          <embed
+          <p
+            class="inline-block d-flex flex-column justify-content-center align-items-center"
             v-else-if="file && start_with(file.type, 'application') && (this.fileTypes.includes('application/*') || (this.fileTypes.includes(file.type)))"
-            :src="file.url"
-            class="d-block cursor-pointer" style="width: 100%; height: 100%; object-fit:cover;cursor: pointer"
+          >
+            <embed
+              :src="file.url"
+              class="d-block cursor-pointer" style="width: 50px; height: 50px; object-fit:cover;cursor: pointer"
+              @click="showPDF(file.url)"
             />
-<!--          </div>-->
+            <a
+              :href="file.url"
+              target="_blank"
+            >Preview</a>
+          </p>
 
           <button class="mt-2 position-absolute danger-button" style="top: -8px; right: 0px" type="button"
                   @click.self="removeFile(index)">X
           </button>
         </div>
 
-        <div class="col-3 preview-item" style="padding-top: 20px; margin-left: 10px">
+        <div class="col-3 preview-item ml-2" style="padding-top: 20px;">
           <div class="cursor-pointer">
             <button
-              class="file-button"
+              class="file-button cursor-pointer"
               type="button"
               @click="$refs['file-input'].click()"
             >
               Add file
             </button>
-            <p class="url-link mt-2">Add from url</p>
+            <p
+              @click="$refs['file-input'].click()"
+              class="url-link mt-2">Add from url</p>
           </div>
         </div>
 
@@ -85,15 +94,16 @@
   Uploaded Files: {{ no_of_files ? no_of_files : 0 }}
 
   <div id="myModal" class="modal">
-    <input type="hidden" id="index" value="0" />
-    <div class="modal-title d-flex justify-content-start" >
+    <input id="index" type="hidden" value="0" />
+    <div class="modal-title d-flex justify-content-start">
       <h1 id="title-file-name" class="heading" style="margin-left: 40px"></h1>
       <span class="close cursor-pointer" @click="closeModal()">&times;</span>
     </div>
 
     <div class="d-flex flex-row" style="height: auto;">
       <div class="modal-content position-relative">
-        <img id="left-icon" @click="previous" class="cursor-pointer left-arrow" src="../assets/left_icon.png" alt="left_icon" />
+        <img id="left-icon" alt="left_icon" class="cursor-pointer left-arrow" src="../assets/left_icon.png"
+             @click="previous" />
         <div id="image-slide" style="display: block">
           <img id="modal-image" alt="image" src="../assets/logo.png"
                style="width: 500px; height: 500px;background: rgba(0,0,0,0.7)">
@@ -106,7 +116,8 @@
             <source id="modal-video-source" src="" type="video/mp4">
           </video>
         </div>
-        <img id="right-icon" @click="next" class="cursor-pointer right-arrow" src="../assets/right_icon.png" alt="right_icon"/>
+        <img id="right-icon" alt="right_icon" class="cursor-pointer right-arrow" src="../assets/right_icon.png"
+             @click="next" />
       </div>
 
       <div class="modal-sidebar">
@@ -325,17 +336,17 @@ export default {
       file_type.innerHTML = "";
       file_size.innerHTML = "";
       _index.value = index;
-      console.log(_index.value)
+      console.log(_index.value);
 
-      if(_index.value > 0) {
+      if (_index.value > 0) {
         left_icon.style.display = "block";
       } else {
         left_icon.style.display = "none";
       }
 
-      if(_index.value < this.files.length - 1) {
+      if (_index.value < this.files.length - 1) {
         right_icon.style.display = "block";
-      }else {
+      } else {
         right_icon.style.display = "none";
       }
 
@@ -369,16 +380,16 @@ export default {
     previous() {
       let _index_element = document.getElementById("index");
       let _index = parseInt(_index_element.value);
-      if( _index > 0) {
+      if (_index > 0) {
         _index_element.value = _index - 1;
         let _new_index = _index - 1;
-        let _file = this.files[_new_index].type.split('/');
-        if(this.start_with(_file[0], 'image')) {
-          this.openModal(_new_index, 'image');
+        let _file = this.files[_new_index].type.split("/");
+        if (this.start_with(_file[0], "image")) {
+          this.openModal(_new_index, "image");
         }
 
-        if(this.start_with(_file[0], 'video')) {
-          this.openModal(_new_index, 'video');
+        if (this.start_with(_file[0], "video")) {
+          this.openModal(_new_index, "video");
         }
       }
     },
@@ -386,27 +397,27 @@ export default {
     next() {
       let _index_element = document.getElementById("index");
       let _index = parseInt(_index_element.value);
-      if(_index < this.files.length - 1) {
+      if (_index < this.files.length - 1) {
         _index_element.value = _index + 1;
         let _new_index = _index + 1;
-        let _file = this.files[_new_index].type.split('/');
-        if(this.start_with(_file[0], 'image')) {
-          this.openModal(_new_index, 'image');
+        let _file = this.files[_new_index].type.split("/");
+        if (this.start_with(_file[0], "image")) {
+          this.openModal(_new_index, "image");
         }
 
-        if(this.start_with(_file[0], 'video')) {
-          this.openModal(_new_index, 'video');
+        if (this.start_with(_file[0], "video")) {
+          this.openModal(_new_index, "video");
         }
       }
     },
 
     closeModal() {
-      document.getElementById("title-file-name").innerHTML = '';
-      document.getElementById("file-name").innerHTML = '';
-      document.getElementById("file-type").innerHTML = '';
-      document.getElementById("file-size").innerHTML = '';
+      document.getElementById("title-file-name").innerHTML = "";
+      document.getElementById("file-name").innerHTML = "";
+      document.getElementById("file-type").innerHTML = "";
+      document.getElementById("file-size").innerHTML = "";
       document.getElementById("modal-video").pause();
-      document.getElementById("modal-video-source").src = '';
+      document.getElementById("modal-video-source").src = "";
 
       document.getElementById("myModal").style.display = "none";
     },
@@ -540,7 +551,6 @@ input[type="file"] {
   border-radius: 2px;
   width: 100%;
   height: 300px;
-  cursor: pointer;
 }
 
 .file-input {
@@ -589,7 +599,7 @@ input[type="file"] {
   font-size: large;
 }
 
-.left-arrow{
+.left-arrow {
   display: none;
   position: absolute;
   width: 50px;
@@ -597,7 +607,7 @@ input[type="file"] {
   top: 280px;
 }
 
-.right-arrow{
+.right-arrow {
   display: none;
   position: absolute;
   width: 50px;
